@@ -1,0 +1,38 @@
+import 'dart:math';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:life_link_admin/models/admin_model.dart';
+import 'package:life_link_admin/services/auth_service.dart';
+
+class AdminService {
+  static const adminCollection = 'admin';
+
+  static Future<AdminModel> getAdminData(String id) async {
+    return AdminModel.fromDocumentSnapshot(
+      await FirebaseFirestore.instance.collection(adminCollection).doc(id).get(),
+    );
+  }
+
+  static Future<List<AdminModel>> getAdminList() async {
+    List<AdminModel> list = [];
+
+    await FirebaseFirestore.instance.collection(adminCollection).get().then((
+      QuerySnapshot querySnapshot,
+    ) {
+      querySnapshot.docs.forEach((doc) {
+        list.add(AdminModel.fromDocumentSnapshot(doc));
+      });
+    });
+
+    return list;
+  }
+
+  static Future<void> createAdmin(AdminModel admin) async {
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    Random rand = Random.secure();
+    String newPass = List.generate(6, (index) => chars[rand.nextInt(chars.length)]).join();
+
+    String uid = await AuthService.registerAdmin(admin.email, newPass);
+
+    await FirebaseFirestore.instance.collection(adminCollection).doc(uid).set(admin.toMap());
+  }
+}
