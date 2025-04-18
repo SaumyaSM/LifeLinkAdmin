@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:life_link_admin/models/admin_model.dart';
 import 'package:life_link_admin/services/admin_service.dart';
@@ -17,9 +19,17 @@ class AuthService {
     await FirebaseAuth.instance.signOut();
   }
 
-  static Future<String> registerAdmin(String email, String password) async {
+  static Future<String> registerAdmin(String email) async {
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    Random rand = Random.secure();
+    String newPass = List.generate(8, (index) => chars[rand.nextInt(chars.length)]).join();
+
     return await FirebaseAuth.instance
-        .createUserWithEmailAndPassword(email: email, password: password)
+        .createUserWithEmailAndPassword(email: email, password: newPass)
         .then((value) => value.user!.uid);
+  }
+
+  static Future<void> sendPasswordResetEmail(String email) async {
+    await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
   }
 }

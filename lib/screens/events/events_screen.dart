@@ -1,24 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:life_link_admin/constants/colors.dart';
-import 'package:life_link_admin/models/admin_model.dart';
-import 'package:life_link_admin/screens/admin/create_admin.dart';
-import 'package:life_link_admin/services/admin_service.dart';
-import 'package:life_link_admin/services/auth_service.dart';
+import 'package:life_link_admin/models/events_model.dart';
+import 'package:life_link_admin/screens/events/create_event.dart';
+import 'package:life_link_admin/services/event_service.dart';
 import 'package:life_link_admin/services/toast_service.dart';
 import 'package:life_link_admin/widgets/button_widget.dart';
 import 'package:life_link_admin/widgets/card_widget.dart';
 import 'package:life_link_admin/widgets/loading_widget.dart';
 import 'package:life_link_admin/widgets/no_data_widget.dart';
 
-class AdminScreen extends StatefulWidget {
-  const AdminScreen({super.key});
+class EventsScreen extends StatefulWidget {
+  const EventsScreen({super.key});
 
   @override
-  State<AdminScreen> createState() => _AdminScreenState();
+  State<EventsScreen> createState() => _EventsScreenState();
 }
 
-class _AdminScreenState extends State<AdminScreen> {
-  List<AdminModel> list = [];
+class _EventsScreenState extends State<EventsScreen> {
+  List<EventModel> list = [];
   bool isLoading = true;
 
   @override
@@ -30,7 +29,7 @@ class _AdminScreenState extends State<AdminScreen> {
   getData() async {
     setState(() => isLoading = true);
 
-    await AdminService.getAdminList().then((value) {
+    await EventService.getEventsList().then((value) {
       setState(() => list = value);
     });
 
@@ -49,7 +48,7 @@ class _AdminScreenState extends State<AdminScreen> {
               builder:
                   (context) => ButtonWidget(
                     onTap: () => Scaffold.of(context).openEndDrawer(),
-                    title: 'Create Admin',
+                    title: 'Create Event',
                   ),
             ),
           ],
@@ -57,7 +56,7 @@ class _AdminScreenState extends State<AdminScreen> {
         actions: <Widget>[Container()],
       ),
       body: buildBody(),
-      endDrawer: CreateAdmin(context: context, getData: () => getData()),
+      endDrawer: CreateEvents(context: context, getData: () => getData()),
     );
   }
 
@@ -71,14 +70,14 @@ class _AdminScreenState extends State<AdminScreen> {
               ? ListView.builder(
                 itemCount: list.length,
                 itemBuilder: (context, index) {
-                  return _adminCard(list[index]);
+                  return _eventCard(list[index]);
                 },
               )
               : NoDataWidget(),
     );
   }
 
-  Widget _adminCard(AdminModel model) {
+  Widget _eventCard(EventModel model) {
     return CardWidget(
       child: Column(
         children: [
@@ -90,9 +89,9 @@ class _AdminScreenState extends State<AdminScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(model.name, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                    Text(model.email),
-                    Text(model.isSuperAdmin ? 'Super Admin' : 'Admin'),
+                    Text(model.title, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    Text(model.description),
+                    Text(model.date),
                   ],
                 ),
               ),
@@ -100,13 +99,8 @@ class _AdminScreenState extends State<AdminScreen> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   ButtonWidget(
-                    onTap: () => resetPassword(model),
-                    title: 'Reset Password',
-                    color: kPeachColor,
-                  ),
-                  ButtonWidget(
-                    onTap: () => deleteAdmin(model),
-                    title: 'Delete Admin',
+                    onTap: () => deleteEvent(model),
+                    title: 'Delete Event',
                     color: kProfileIcon,
                   ),
                 ],
@@ -118,23 +112,7 @@ class _AdminScreenState extends State<AdminScreen> {
     );
   }
 
-  void resetPassword(AdminModel model) async {
-    await AuthService.sendPasswordResetEmail(model.email)
-        .then((value) {
-          ToastService.displaySuccessMotionToast(
-            context: context,
-            description: 'Password Reset Email Sent!',
-          );
-        })
-        .catchError((error) {
-          ToastService.displayErrorMotionToast(
-            context: context,
-            description: 'Something went wrong!',
-          );
-        });
-  }
-
-  void deleteAdmin(AdminModel model) {
+  void deleteEvent(EventModel model) {
     showDialog<String>(
       context: context,
       builder:
@@ -145,7 +123,7 @@ class _AdminScreenState extends State<AdminScreen> {
               children: <Widget>[
                 Padding(
                   padding: const EdgeInsets.fromLTRB(30, 30, 30, 20),
-                  child: Text('Do you want to delete ${model.name}?'),
+                  child: Text('Do you want to delete event?'),
                 ),
                 Padding(
                   padding: const EdgeInsets.only(bottom: 10),
@@ -156,12 +134,12 @@ class _AdminScreenState extends State<AdminScreen> {
                         onPressed: () async {
                           Navigator.pop(context);
                           setState(() => isLoading = true);
-                          await AdminService.deleteAdmin(model)
+                          await EventService.deleteEvent(model.id)
                               .then((value) {
                                 getData();
                                 ToastService.displaySuccessMotionToast(
                                   context: context,
-                                  description: '${model.name} Deleted!',
+                                  description: 'Deleted!',
                                 );
                               })
                               .catchError((error) {

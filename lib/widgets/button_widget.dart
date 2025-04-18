@@ -4,7 +4,8 @@ import 'package:life_link_admin/constants/colors.dart';
 class ButtonWidget extends StatelessWidget {
   Function onTap;
   String title;
-  ButtonWidget({super.key, required this.onTap, required this.title});
+  Color? color;
+  ButtonWidget({super.key, required this.onTap, required this.title, this.color = kOrangeColor});
 
   @override
   Widget build(BuildContext context) {
@@ -12,9 +13,8 @@ class ButtonWidget extends StatelessWidget {
       onPressed: () => onTap(),
       style: TextButton.styleFrom(splashFactory: NoSplash.splashFactory),
       child: Container(
-        width: MediaQuery.of(context).size.width * 0.40,
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(color: kOrangeColor, borderRadius: BorderRadius.circular(50)),
+        padding: const EdgeInsets.all(15),
+        decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(10)),
         child: Center(
           child: Text(title, style: TextStyle(color: Colors.white), textAlign: TextAlign.center),
         ),

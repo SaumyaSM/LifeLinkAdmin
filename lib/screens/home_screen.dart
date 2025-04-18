@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:life_link_admin/screens/admin/admin_screen.dart';
 import 'package:life_link_admin/screens/dashboard/dashboard_screen.dart';
 import 'package:life_link_admin/screens/donations/donations_screen.dart';
+import 'package:life_link_admin/screens/events/events_screen.dart';
 import 'package:life_link_admin/screens/users/users_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -28,7 +29,13 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('LifeLink'), centerTitle: true),
+      appBar: AppBar(
+        title: Text(
+          'LifeLink Dashboard',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25),
+        ),
+        centerTitle: true,
+      ),
       body: Row(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
@@ -97,6 +104,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
                 icon: const Icon(Icons.handshake_outlined),
               ),
+              SideMenuItem(
+                title: 'Events',
+                onTap: (index, _) {
+                  sideMenu.changePage(index);
+                },
+                icon: const Icon(Icons.event),
+              ),
 
               // SideMenuItem(
               //   builder: (context, displayMode) {
@@ -115,7 +129,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 UsersScreen(isDonor: true),
                 UsersScreen(isDonor: false),
                 DonationsScreen(),
-
+                EventsScreen(),
                 // this is for SideMenuItem with builder (divider)
                 // const SizedBox.shrink(),
               ],

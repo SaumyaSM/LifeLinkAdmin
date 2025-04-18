@@ -19,4 +19,8 @@ class UserService {
 
     return list;
   }
+
+  static Future<void> deleteUser(UserModel admin) async {
+    await FirebaseFirestore.instance.collection(userCollection).doc(admin.id).delete();
+  }
 }

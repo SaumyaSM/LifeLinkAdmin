@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:life_link_admin/models/admin_model.dart';
 import 'package:life_link_admin/services/auth_service.dart';
 
@@ -27,12 +28,16 @@ class AdminService {
   }
 
   static Future<void> createAdmin(AdminModel admin) async {
-    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    Random rand = Random.secure();
-    String newPass = List.generate(6, (index) => chars[rand.nextInt(chars.length)]).join();
+    await FirebaseFirestore.instance
+        .collection(adminCollection)
+        .doc(admin.id)
+        .set(admin.toMap())
+        .then((value) async {
+          await AuthService.sendPasswordResetEmail(admin.email);
+        });
+  }
 
-    String uid = await AuthService.registerAdmin(admin.email, newPass);
-
-    await FirebaseFirestore.instance.collection(adminCollection).doc(uid).set(admin.toMap());
+  static Future<void> deleteAdmin(AdminModel admin) async {
+    await FirebaseFirestore.instance.collection(adminCollection).doc(admin.id).delete();
   }
 }

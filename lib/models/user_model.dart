@@ -17,6 +17,7 @@ class UserModel {
   late List<String> likes;
   late List<String> history;
   late int waitingTime;
+  late String profileImageUrl;
 
   UserModel({
     required this.id,
@@ -35,6 +36,7 @@ class UserModel {
     required this.likes,
     required this.history,
     required this.waitingTime,
+    required this.profileImageUrl,
   });
 
   UserModel.fromDocumentSnapshot(DocumentSnapshot documentSnapshot) {
@@ -51,6 +53,9 @@ class UserModel {
     isDonor = data['isDonor'] ?? false;
     bloodType = data['bloodType'] ?? '';
     organType = data['organType'] ?? '';
+    profileImageUrl =
+        data['profileImageUrl'] ??
+        'https://thumbs.dreamstime.com/b/default-avatar-profile-vector-user-profile-default-avatar-profile-vector-user-profile-profile-179376714.jpg';
 
     final hlaMap = data['hlaTyping'] as Map<String, dynamic>? ?? {};
     hlaTyping = hlaMap.map((key, value) => MapEntry(key, value.toString()));
@@ -58,69 +63,7 @@ class UserModel {
     isTestsCompleted = data['isTestsCompleted'] ?? false;
     likes = List<String>.from(data['likes'] ?? []);
     history = List<String>.from(data['history'] ?? []);
-    waitingTime = data['waitingTime'] != null
-        ? int.tryParse(data['waitingTime'].toString()) ?? 0
-        : 0;
-  }
-
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'fullName': fullName,
-      'dateOfBirth': dateOfBirth,
-      'gender': gender,
-      'nic': nic,
-      'contact': contact,
-      'address': address,
-      'city': city,
-      'isDonor': isDonor,
-      'bloodType': bloodType,
-      'organType': organType,
-      'hlaTyping': hlaTyping,
-      'isTestsCompleted': isTestsCompleted,
-      'likes': likes,
-      'history': history,
-      'waitingTime': waitingTime,
-    };
-  }
-}
-
-extension UserModelCopy on UserModel {
-  UserModel copyWith({
-    String? id,
-    String? fullName,
-    String? dateOfBirth,
-    String? gender,
-    String? nic,
-    String? contact,
-    String? address,
-    String? city,
-    bool? isDonor,
-    String? bloodType,
-    String? organType,
-    Map<String, String>? hlaTyping,
-    bool? isTestsCompleted,
-    List<String>? likes,
-    List<String>? history,
-    int? waitingTime,
-  }) {
-    return UserModel(
-      id: id ?? this.id,
-      fullName: fullName ?? this.fullName,
-      dateOfBirth: dateOfBirth ?? this.dateOfBirth,
-      gender: gender ?? this.gender,
-      nic: nic ?? this.nic,
-      contact: contact ?? this.contact,
-      address: address ?? this.address,
-      city: city ?? this.city,
-      isDonor: isDonor ?? this.isDonor,
-      bloodType: bloodType ?? this.bloodType,
-      organType: organType ?? this.organType,
-      hlaTyping: hlaTyping ?? this.hlaTyping,
-      isTestsCompleted: isTestsCompleted ?? this.isTestsCompleted,
-      likes: likes ?? this.likes,
-      history: history ?? this.history,
-      waitingTime: waitingTime ?? this.waitingTime,
-    );
+    waitingTime =
+        data['waitingTime'] != null ? int.tryParse(data['waitingTime'].toString()) ?? 0 : 0;
   }
 }
