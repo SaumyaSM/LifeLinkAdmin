@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:life_link_admin/models/user_model.dart';
 import 'package:life_link_admin/screens/users/user_details.dart';
 import 'package:life_link_admin/services/user_service.dart';
-import 'package:life_link_admin/widgets/button_widget.dart';
-import 'package:life_link_admin/widgets/card_widget.dart';
 import 'package:life_link_admin/widgets/loading_widget.dart';
 import 'package:life_link_admin/widgets/no_data_widget.dart';
+import '../../constants/colors.dart';
 
 class UsersScreen extends StatefulWidget {
-  bool isDonor;
-  UsersScreen({super.key, required this.isDonor});
+  final bool isDonor;
+  const UsersScreen({super.key, required this.isDonor});
 
   @override
   State<UsersScreen> createState() => _UsersScreenState();
@@ -19,26 +18,7 @@ class _UsersScreenState extends State<UsersScreen> {
   List<UserModel> list = [];
   List<UserModel> filteredList = [];
   bool isLoading = true;
-
-  UserModel selectedUser = UserModel(
-    id: 'Loading',
-    fullName: 'Loading',
-    dateOfBirth: 'Loading',
-    gender: 'Loading',
-    nic: 'Loading',
-    contact: 'Loading',
-    address: 'Loading',
-    city: 'Loading',
-    isDonor: true,
-    bloodType: 'Loading',
-    organType: 'Loading',
-    hlaTyping: {'Loading': 'Loading'},
-    isTestsCompleted: true,
-    likes: [],
-    history: [],
-    waitingTime: 0,
-    profileImageUrl: 'Loading',
-  );
+  late UserModel selectedUser;
 
   @override
   void initState() {
@@ -53,7 +33,9 @@ class _UsersScreenState extends State<UsersScreen> {
       setState(() {
         list = value;
         filteredList = value;
-        selectedUser = list[0];
+        if (value.isNotEmpty) {
+          selectedUser = list[0];
+        }
       });
     });
 
@@ -63,91 +45,219 @@ class _UsersScreenState extends State<UsersScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: appBar(),
-      body: buildBody(),
-      endDrawer: UserDetails(context: context, model: selectedUser, getData: () => getData()),
+      appBar: _buildAppBar(),
+      body: _buildBody(),
+      endDrawer:
+          filteredList.isNotEmpty
+              ? UserDetails(
+                context: context,
+                model: selectedUser,
+                getData: () => getData(),
+              )
+              : null,
     );
   }
 
-  AppBar appBar() {
+  AppBar _buildAppBar() {
     return AppBar(
-      actions: <Widget>[Container()],
-      title: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          SizedBox(
-            width: 300,
+      backgroundColor: kPurpleColor,
+      foregroundColor: Colors.white,
+      elevation: 0,
+      title: Text(
+        widget.isDonor ? 'Donors' : 'Recipients',
+        style: const TextStyle(fontWeight: FontWeight.bold),
+      ),
+      actions: [
+        Container(
+          width: 300,
+          margin: const EdgeInsets.only(right: 16),
+          child: SizedBox(
+            height: 40,
             child: TextField(
               decoration: InputDecoration(
-                hintText: 'SEARCH USER',
-                enabledBorder: const OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.grey, width: 0.0),
+                hintText: 'Search User',
+                hintStyle: const TextStyle(color: Colors.white70),
+                prefixIcon: const Icon(Icons.search, color: Colors.white70),
+                filled: true,
+                fillColor: Colors.white.withOpacity(0.2),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30),
+                  borderSide: BorderSide.none,
                 ),
-                focusedBorder: const OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.grey, width: 0.0),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30),
+                  borderSide: const BorderSide(color: Colors.white, width: 1.0),
                 ),
               ),
+              style: const TextStyle(color: Colors.white),
               onChanged: (value) {
                 setState(() {
                   filteredList =
-                      list.where((model) {
-                        return model.fullName.toLowerCase().contains(value.toLowerCase());
-                      }).toList();
+                      list
+                          .where(
+                            (model) => model.fullName.toLowerCase().contains(
+                              value.toLowerCase(),
+                            ),
+                          )
+                          .toList();
                 });
               },
             ),
           ),
-        ],
+        ),
+      ],
+      flexibleSpace: Container(
+        decoration: const BoxDecoration(gradient: kGradientHome),
       ),
     );
   }
 
-  Widget buildBody() {
+  Widget _buildBody() {
     return LoadingWidget(
       inAsyncCall: isLoading,
       child:
           isLoading
               ? const SizedBox()
-              : filteredList.length > 0
-              ? ListView.builder(
-                itemCount: filteredList.length,
-                itemBuilder: (context, index) {
-                  return _userCard(filteredList[index]);
-                },
+              : filteredList.isNotEmpty
+              ? Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [kPurpleColor.withOpacity(0.1), Colors.white],
+                  ),
+                ),
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: filteredList.length,
+                  itemBuilder: (context, index) {
+                    return _userCard(filteredList[index]);
+                  },
+                ),
               )
-              : NoDataWidget(),
+              : const NoDataWidget(),
     );
   }
 
   Widget _userCard(UserModel model) {
-    return CardWidget(
-      child: Padding(
-        padding: const EdgeInsets.all(10),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(model.fullName, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                Text(model.gender),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Builder(
-                  builder:
-                      (context) => ButtonWidget(
-                        onTap: () {
-                          setState(() => selectedUser = model);
-                          Scaffold.of(context).openEndDrawer();
-                        },
-                        title: 'More Details',
-                      ),
-                ),
-              ],
-            ),
-          ],
+    final bloodOrOrganInfo =
+        widget.isDonor
+            ? "Blood Type: ${model.bloodType}"
+            : "Organ: ${model.organType}";
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          gradient: LinearGradient(
+            colors: [Colors.white, kPeachColor.withOpacity(0.2)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 30,
+                    backgroundColor: kOrangeColor,
+                    backgroundImage:
+                        model.profileImageUrl != 'Loading'
+                            ? NetworkImage(model.profileImageUrl)
+                            : null,
+                    child:
+                        model.profileImageUrl == 'Loading'
+                            ? Text(
+                              model.fullName.isNotEmpty
+                                  ? model.fullName[0].toUpperCase()
+                                  : '',
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            )
+                            : null,
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          model.fullName,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: kPurpleColor,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          bloodOrOrganInfo,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: widget.isDonor ? kRedColor : kDarkPinkColor,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          "City: ${model.city}",
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.black54,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Chip(
+                    label: Text(model.gender),
+                    backgroundColor: kPeachColor.withOpacity(0.3),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                  Builder(
+                    builder:
+                        (context) => ElevatedButton.icon(
+                          onPressed: () {
+                            setState(() => selectedUser = model);
+                            Scaffold.of(context).openEndDrawer();
+                          },
+                          icon: const Icon(Icons.visibility),
+                          label: const Text('Details'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: kMainButtonColor,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 10,
+                            ),
+                          ),
+                        ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
