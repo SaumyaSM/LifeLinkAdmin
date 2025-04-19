@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:life_link_admin/constants/colors.dart';
 import 'package:life_link_admin/models/events_model.dart';
 import 'package:life_link_admin/services/event_service.dart';
 import 'package:life_link_admin/services/toast_service.dart';
-import 'package:life_link_admin/widgets/button_widget.dart';
 import 'package:life_link_admin/widgets/loading_widget.dart';
-import 'package:life_link_admin/widgets/text_input_widget.dart';
-import 'package:life_link_admin/widgets/title_text.dart';
 
 class CreateEvents extends StatefulWidget {
-  BuildContext context;
-  Function() getData;
-  CreateEvents({super.key, required this.context, required this.getData});
+  final BuildContext context;
+  final Function() getData;
+
+  const CreateEvents({super.key, required this.context, required this.getData});
 
   @override
   State<CreateEvents> createState() => _CreateEventsState();
@@ -22,49 +21,252 @@ class _CreateEventsState extends State<CreateEvents> {
   TextEditingController titleTEC = TextEditingController();
   TextEditingController descriptionTEC = TextEditingController();
   DateTime selectedDate = DateTime.now();
+  final DateFormat dateFormatter = DateFormat('MMM dd, yyyy');
 
   @override
   Widget build(BuildContext context) {
     return LoadingWidget(
       inAsyncCall: isLoading,
       child: SizedBox(
-        width: 800,
+        width: 400,
         child: Drawer(
-          child: ListView(
-            padding: EdgeInsets.all(50),
+          backgroundColor: Colors.white,
+          elevation: 2,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(20),
+              bottomLeft: Radius.circular(20),
+            ),
+          ),
+          child: Column(
             children: [
-              TitleText(text: 'Create Admin'),
-              const SizedBox(height: 50),
-              TextInputWidget(
-                controller: titleTEC,
-                title: 'Title',
-                keyboardType: TextInputType.name,
-              ),
-              const SizedBox(height: 20),
-              TextInputWidget(
-                controller: descriptionTEC,
-                title: 'Description',
-                keyboardType: TextInputType.text,
-              ),
-
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  Text(
-                    'Date: ${selectedDate.year}-${selectedDate.month}-${selectedDate.day}',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              DrawerHeader(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [kPeachColor, kOrangeColor],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                  const SizedBox(width: 52),
-                  ButtonWidget(
-                    onTap: () => _selectDate(context),
-                    title: 'Change Date',
-                    color: kPeachColor,
+                ),
+                margin: EdgeInsets.zero,
+                padding: const EdgeInsets.all(16),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.event, color: Colors.white, size: 48),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Create New Event',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 22,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Container(
+                        height: 3,
+                        width: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.7),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
-
-              const SizedBox(height: 20),
-              ButtonWidget(onTap: () => createAdmin(), title: 'SUBMIT'),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 20,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.only(left: 8.0, bottom: 4.0),
+                        child: Text(
+                          'Event Details',
+                          style: TextStyle(
+                            color: kOrangeColor,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: titleTEC,
+                        decoration: InputDecoration(
+                          labelText: 'Event Title',
+                          hintText: 'Enter event title',
+                          prefixIcon: const Icon(
+                            Icons.title,
+                            color: kOrangeColor,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Colors.grey),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: kOrangeColor,
+                              width: 2,
+                            ),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 16,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      TextField(
+                        controller: descriptionTEC,
+                        maxLines: 5,
+                        decoration: InputDecoration(
+                          labelText: 'Event Description',
+                          hintText: 'Enter event description',
+                          alignLabelWithHint: true,
+                          prefixIcon: const Padding(
+                            padding: EdgeInsets.only(bottom: 80),
+                            child: Icon(Icons.description, color: kOrangeColor),
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Colors.grey),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: kOrangeColor,
+                              width: 2,
+                            ),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 16,
+                            horizontal: 16,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      const Padding(
+                        padding: EdgeInsets.only(left: 8.0, bottom: 4.0),
+                        child: Text(
+                          'Event Date',
+                          style: TextStyle(
+                            color: kOrangeColor,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      InkWell(
+                        onTap: () => _selectDate(context),
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 16,
+                          ),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey.shade400),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.calendar_today,
+                                color: kPeachColor,
+                              ),
+                              const SizedBox(width: 16),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Selected Date',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey.shade700,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    dateFormatter.format(selectedDate),
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const Spacer(),
+                              const Icon(
+                                Icons.arrow_drop_down,
+                                color: kOrangeColor,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 40),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () {
+                                Scaffold.of(widget.context).closeEndDrawer();
+                              },
+                              style: OutlinedButton.styleFrom(
+                                side: BorderSide(color: Colors.grey.shade400),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
+                              ),
+                              child: const Text(
+                                'CANCEL',
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            flex: 2,
+                            child: ElevatedButton.icon(
+                              onPressed: createEvent,
+                              icon: const Icon(Icons.save_outlined),
+                              label: const Text('CREATE EVENT'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: kOrangeColor,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -76,9 +278,25 @@ class _CreateEventsState extends State<CreateEvents> {
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: selectedDate,
-      firstDate: DateTime(2015, 8),
+      firstDate: DateTime.now(),
       lastDate: DateTime(2101),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: kOrangeColor,
+              onPrimary: Colors.white,
+              onSurface: Colors.black,
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(foregroundColor: kOrangeColor),
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
+
     if (picked != null && picked != selectedDate) {
       setState(() {
         selectedDate = picked;
@@ -86,33 +304,44 @@ class _CreateEventsState extends State<CreateEvents> {
     }
   }
 
-  createAdmin() async {
-    if (titleTEC.text.trim() == '') {
-      ToastService.displayErrorMotionToast(context: context, description: 'Title is Missing!');
+  createEvent() async {
+    // Validate inputs
+    if (titleTEC.text.trim().isEmpty) {
+      ToastService.displayErrorMotionToast(
+        context: context,
+        description: 'Event title is required!',
+      );
       return;
     }
 
-    if (descriptionTEC.text.trim() == '') {
+    if (descriptionTEC.text.trim().isEmpty) {
       ToastService.displayErrorMotionToast(
         context: context,
-        description: 'Description is Missing!',
+        description: 'Event description is required!',
       );
       return;
     }
 
     setState(() => isLoading = true);
 
+    // Format date in ISO format (YYYY-MM-DD)
+    String formattedDate =
+        "${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}";
+
     EventModel model = EventModel(
-      id: DateTime.now().toString(),
-      date: '${selectedDate.year}-${selectedDate.month}-${selectedDate.day}',
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      date: formattedDate,
       description: descriptionTEC.text.trim(),
       title: titleTEC.text.trim(),
     );
 
     await EventService.createEvent(model)
         .then((value) {
-          ToastService.displaySuccessMotionToast(context: context, description: 'Event Created!');
-          Scaffold.of(context).closeEndDrawer();
+          ToastService.displaySuccessMotionToast(
+            context: context,
+            description: 'Event successfully created!',
+          );
+          Scaffold.of(widget.context).closeEndDrawer();
           setState(() => isLoading = false);
           widget.getData();
         })
