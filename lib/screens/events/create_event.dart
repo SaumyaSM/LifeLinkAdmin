@@ -322,9 +322,8 @@ class _CreateEventsState extends State<CreateEvents> {
       return;
     }
 
-    setState(() => isLoading = true);
+    // setState(() => isLoading = true);
 
-    // Format date in ISO format (YYYY-MM-DD)
     String formattedDate =
         "${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}";
 
@@ -341,7 +340,7 @@ class _CreateEventsState extends State<CreateEvents> {
             context: context,
             description: 'Event successfully created!',
           );
-          Scaffold.of(widget.context).closeEndDrawer();
+          Navigator.of(context).pop();
           setState(() => isLoading = false);
           widget.getData();
         })
