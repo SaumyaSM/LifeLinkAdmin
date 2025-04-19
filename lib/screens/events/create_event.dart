@@ -43,7 +43,7 @@ class _CreateEventsState extends State<CreateEvents> {
               DrawerHeader(
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [kPeachColor, kOrangeColor],
+                    colors: [kPurpleColor, kPinkColor],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -92,7 +92,7 @@ class _CreateEventsState extends State<CreateEvents> {
                         child: Text(
                           'Event Details',
                           style: TextStyle(
-                            color: kOrangeColor,
+                            color: kPinkColor,
                             fontWeight: FontWeight.w500,
                             fontSize: 16,
                           ),
@@ -106,7 +106,7 @@ class _CreateEventsState extends State<CreateEvents> {
                           hintText: 'Enter event title',
                           prefixIcon: const Icon(
                             Icons.title,
-                            color: kOrangeColor,
+                            color: kPinkColor,
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -115,7 +115,7 @@ class _CreateEventsState extends State<CreateEvents> {
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: const BorderSide(
-                              color: kOrangeColor,
+                              color: kPinkColor,
                               width: 2,
                             ),
                           ),
@@ -134,7 +134,7 @@ class _CreateEventsState extends State<CreateEvents> {
                           alignLabelWithHint: true,
                           prefixIcon: const Padding(
                             padding: EdgeInsets.only(bottom: 80),
-                            child: Icon(Icons.description, color: kOrangeColor),
+                            child: Icon(Icons.description, color: kPinkColor),
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -143,7 +143,7 @@ class _CreateEventsState extends State<CreateEvents> {
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: const BorderSide(
-                              color: kOrangeColor,
+                              color: kPinkColor,
                               width: 2,
                             ),
                           ),
@@ -159,7 +159,7 @@ class _CreateEventsState extends State<CreateEvents> {
                         child: Text(
                           'Event Date',
                           style: TextStyle(
-                            color: kOrangeColor,
+                            color: kPinkColor,
                             fontWeight: FontWeight.w500,
                             fontSize: 16,
                           ),
@@ -182,7 +182,7 @@ class _CreateEventsState extends State<CreateEvents> {
                             children: [
                               const Icon(
                                 Icons.calendar_today,
-                                color: kPeachColor,
+                                color: kOrangeColor,
                               ),
                               const SizedBox(width: 16),
                               Column(
@@ -209,7 +209,7 @@ class _CreateEventsState extends State<CreateEvents> {
                               const Spacer(),
                               const Icon(
                                 Icons.arrow_drop_down,
-                                color: kOrangeColor,
+                                color: kPurpleColor,
                               ),
                             ],
                           ),
@@ -249,7 +249,7 @@ class _CreateEventsState extends State<CreateEvents> {
                               icon: const Icon(Icons.save_outlined),
                               label: const Text('CREATE EVENT'),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: kOrangeColor,
+                                backgroundColor: kPurpleColor,
                                 foregroundColor: Colors.white,
                                 elevation: 0,
                                 shape: RoundedRectangleBorder(
@@ -284,12 +284,12 @@ class _CreateEventsState extends State<CreateEvents> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
-              primary: kOrangeColor,
+              primary: kPurpleColor,
               onPrimary: Colors.white,
               onSurface: Colors.black,
             ),
             textButtonTheme: TextButtonThemeData(
-              style: TextButton.styleFrom(foregroundColor: kOrangeColor),
+              style: TextButton.styleFrom(foregroundColor: kPinkColor),
             ),
           ),
           child: child!,
