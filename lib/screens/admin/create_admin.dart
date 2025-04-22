@@ -256,7 +256,7 @@ class _CreateAdminState extends State<CreateAdmin> {
       return;
     }
 
-    setState(() => isLoading = true);
+    // setState(() => isLoading = true);
 
     await AuthService.registerAdmin(emailTEC.text.trim())
         .then((String uid) async {

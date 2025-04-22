@@ -100,9 +100,9 @@ class _UserDetailsState extends State<UserDetails> {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(75),
               child:
-                  widget.model.profileImageUrl != 'Loading'
+                  widget.model.imageUrl != 'Loading'
                       ? Image.network(
-                        widget.model.profileImageUrl,
+                        widget.model.imageUrl,
                         fit: BoxFit.cover,
                         errorBuilder:
                             (context, error, stackTrace) => Center(

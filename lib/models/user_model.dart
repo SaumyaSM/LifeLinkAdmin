@@ -14,10 +14,10 @@ class UserModel {
   late String organType;
   late Map<String, String> hlaTyping;
   late bool isTestsCompleted;
-  late List<String> likes;
   late List<String> history;
   late int waitingTime;
-  late String profileImageUrl;
+  late String imageUrl;
+  late Map<String, String> medicalDocuments;
 
   UserModel({
     required this.id,
@@ -33,10 +33,10 @@ class UserModel {
     required this.organType,
     required this.hlaTyping,
     required this.isTestsCompleted,
-    required this.likes,
     required this.history,
     required this.waitingTime,
-    required this.profileImageUrl,
+    required this.imageUrl,
+    this.medicalDocuments = const {},
   });
 
   UserModel.fromDocumentSnapshot(DocumentSnapshot documentSnapshot) {
@@ -53,17 +53,21 @@ class UserModel {
     isDonor = data['isDonor'] ?? false;
     bloodType = data['bloodType'] ?? '';
     organType = data['organType'] ?? '';
-    profileImageUrl =
-        data['profileImageUrl'] ??
-        'https://thumbs.dreamstime.com/b/default-avatar-profile-vector-user-profile-default-avatar-profile-vector-user-profile-profile-179376714.jpg';
 
     final hlaMap = data['hlaTyping'] as Map<String, dynamic>? ?? {};
     hlaTyping = hlaMap.map((key, value) => MapEntry(key, value.toString()));
 
     isTestsCompleted = data['isTestsCompleted'] ?? false;
-    likes = List<String>.from(data['likes'] ?? []);
     history = List<String>.from(data['history'] ?? []);
     waitingTime =
-        data['waitingTime'] != null ? int.tryParse(data['waitingTime'].toString()) ?? 0 : 0;
+        data['waitingTime'] != null
+            ? int.tryParse(data['waitingTime'].toString()) ?? 0
+            : 0;
+    imageUrl = data['imageUrl'] ?? '';
+
+    final docsMap = data['medicalDocuments'] as Map<String, dynamic>? ?? {};
+    medicalDocuments = docsMap.map(
+      (key, value) => MapEntry(key, value.toString()),
+    );
   }
 }

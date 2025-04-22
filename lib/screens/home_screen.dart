@@ -275,7 +275,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             if (widget.isSuperAdmin) AdminScreen(),
                             UsersScreen(isDonor: true),
                             UsersScreen(isDonor: false),
-                            DonationsScreen(),
+                            DonationScreen(),
                             EventsScreen(),
                           ],
                         ),

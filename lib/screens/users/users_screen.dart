@@ -169,11 +169,11 @@ class _UsersScreenState extends State<UsersScreen> {
                     radius: 30,
                     backgroundColor: kOrangeColor,
                     backgroundImage:
-                        model.profileImageUrl != 'Loading'
-                            ? NetworkImage(model.profileImageUrl)
+                        model.imageUrl != 'Loading'
+                            ? NetworkImage(model.imageUrl)
                             : null,
                     child:
-                        model.profileImageUrl == 'Loading'
+                        model.imageUrl == 'Loading'
                             ? Text(
                               model.fullName.isNotEmpty
                                   ? model.fullName[0].toUpperCase()
