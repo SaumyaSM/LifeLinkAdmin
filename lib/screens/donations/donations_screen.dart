@@ -4,6 +4,7 @@ import '../../models/match_notification_model.dart';
 import '../../models/user_model.dart';
 import '../../services/notification_service.dart';
 import '../../services/user_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class DonationScreen extends StatefulWidget {
   const DonationScreen({Key? key}) : super(key: key);
@@ -26,6 +27,9 @@ class _DonationScreenState extends State<DonationScreen> {
   // Track which tab is currently selected
   String _currentTabStatus = 'pending';
 
+  // Track which user's documents are being viewed
+  String _currentDocsView = '';
+
   @override
   void dispose() {
     _feedbackController.dispose();
@@ -39,6 +43,7 @@ class _DonationScreenState extends State<DonationScreen> {
       _donorUser = null;
       _recipientUser = null;
       _feedbackController.clear();
+      _currentDocsView = '';
     });
   }
 
@@ -63,6 +68,25 @@ class _DonationScreenState extends State<DonationScreen> {
       setState(() {
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _openDocument(String url) async {
+    if (url.isNotEmpty) {
+      try {
+        final Uri uri = Uri.parse(url);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Could not launch document URL')),
+          );
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error opening document: $e')));
+      }
     }
   }
 
@@ -258,6 +282,7 @@ class _DonationScreenState extends State<DonationScreen> {
                                 setState(() {
                                   _selectedNotificationId = notification.id;
                                   _selectedNotification = notification;
+                                  _currentDocsView = '';
 
                                   // Pre-populate feedback if available
                                   if (notification.adminFeedback != null) {
@@ -292,6 +317,8 @@ class _DonationScreenState extends State<DonationScreen> {
                     ? const Center(child: Text('Select a match to review'))
                     : _isLoading
                     ? const Center(child: CircularProgressIndicator())
+                    : _currentDocsView.isNotEmpty
+                    ? _buildDocumentsView()
                     : _buildMatchDetails(),
           ),
         ],
@@ -344,6 +371,86 @@ class _DonationScreenState extends State<DonationScreen> {
       default:
         return '';
     }
+  }
+
+  Widget _buildDocumentsView() {
+    UserModel user =
+        _currentDocsView == 'donor' ? _donorUser! : _recipientUser!;
+
+    return Card(
+      margin: const EdgeInsets.all(16.0),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () {
+                    setState(() {
+                      _currentDocsView = '';
+                    });
+                  },
+                ),
+                Expanded(
+                  child: Text(
+                    'Medical Documents - ${user.fullName}',
+                    style: const TextStyle(
+                      fontSize: 20.0,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                Chip(
+                  label: Text(
+                    _currentDocsView == 'donor' ? 'Donor' : 'Recipient',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  backgroundColor:
+                      _currentDocsView == 'donor' ? Colors.blue : Colors.orange,
+                ),
+              ],
+            ),
+            const Divider(height: 24),
+
+            if (user.medicalDocuments.isEmpty)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(32.0),
+                  child: Text(
+                    'No medical documents found for this user',
+                    style: TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
+                  ),
+                ),
+              )
+            else
+              Expanded(
+                child: ListView(
+                  children:
+                      user.medicalDocuments.entries.map((entry) {
+                        return Card(
+                          elevation: 2,
+                          margin: const EdgeInsets.symmetric(vertical: 8),
+                          child: ListTile(
+                            leading: const Icon(Icons.description),
+                            title: Text(entry.key),
+                            subtitle: const Text('Click to view document'),
+                            trailing: const Icon(Icons.open_in_new),
+                            onTap: () => _openDocument(entry.value),
+                          ),
+                        );
+                      }).toList(),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildMatchDetails() {
@@ -520,6 +627,22 @@ class _DonationScreenState extends State<DonationScreen> {
                     ],
                   ),
                 ),
+                // Documents view button
+                ElevatedButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      _currentDocsView = role.toLowerCase();
+                    });
+                  },
+                  icon: const Icon(Icons.folder_open),
+                  label: const Text('Medical Documents'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor:
+                        role == 'Donor' ? Colors.blue[100] : Colors.orange[100],
+                    foregroundColor:
+                        role == 'Donor' ? Colors.blue[900] : Colors.orange[900],
+                  ),
+                ),
               ],
             ),
             const Divider(height: 32),
@@ -547,6 +670,30 @@ class _DonationScreenState extends State<DonationScreen> {
             const SizedBox(height: 16),
             if (user.isDonor == false) // Only for recipients
               _buildInfoRow('Waiting Time', '${user.waitingTime} days'),
+
+            // Medical documents count indicator
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(
+                  Icons.folder,
+                  color:
+                      user.medicalDocuments.isEmpty ? Colors.grey : Colors.teal,
+                  size: 18,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Medical Documents: ${user.medicalDocuments.length}',
+                  style: TextStyle(
+                    color:
+                        user.medicalDocuments.isEmpty
+                            ? Colors.grey
+                            : Colors.teal,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),

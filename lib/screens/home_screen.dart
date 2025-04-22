@@ -4,6 +4,7 @@ import 'package:life_link_admin/constants/colors.dart';
 import 'package:life_link_admin/screens/admin/admin_screen.dart';
 import 'package:life_link_admin/screens/dashboard/dashboard_screen.dart';
 import 'package:life_link_admin/screens/donations/donations_screen.dart';
+import 'package:life_link_admin/screens/donations/manage_donation_status.dart';
 import 'package:life_link_admin/screens/events/events_screen.dart';
 import 'package:life_link_admin/screens/users/users_screen.dart';
 
@@ -242,6 +243,13 @@ class _HomeScreenState extends State<HomeScreen> {
                           icon: const Icon(Icons.handshake_rounded),
                         ),
                         SideMenuItem(
+                          title: 'Manage Status',
+                          onTap: (index, _) {
+                            sideMenu.changePage(index);
+                          },
+                          icon: const Icon(Icons.dashboard_rounded),
+                        ),
+                        SideMenuItem(
                           title: 'Events',
                           onTap: (index, _) {
                             sideMenu.changePage(index);
@@ -276,6 +284,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             UsersScreen(isDonor: true),
                             UsersScreen(isDonor: false),
                             DonationScreen(),
+                            ManageDonationStatusScreen(),
                             EventsScreen(),
                           ],
                         ),
