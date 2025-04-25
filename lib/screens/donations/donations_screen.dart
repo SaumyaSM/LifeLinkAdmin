@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../models/match_notification_model.dart';
 import '../../models/user_model.dart';
 import '../../services/notification_service.dart';
 import '../../services/user_service.dart';
-import 'package:url_launcher/url_launcher.dart';
+import '../../constants/colors.dart';
 
 class DonationScreen extends StatefulWidget {
   const DonationScreen({Key? key}) : super(key: key);
@@ -23,11 +24,7 @@ class _DonationScreenState extends State<DonationScreen> {
   UserModel? _donorUser;
   UserModel? _recipientUser;
   bool _isLoading = false;
-
-  // Track which tab is currently selected
   String _currentTabStatus = 'pending';
-
-  // Track which user's documents are being viewed
   String _currentDocsView = '';
 
   @override
@@ -48,9 +45,7 @@ class _DonationScreenState extends State<DonationScreen> {
   }
 
   Future<void> _loadUserDetails(String donorId, String recipientId) async {
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
     try {
       final donor = await _userService.getUserById(donorId);
@@ -62,103 +57,73 @@ class _DonationScreenState extends State<DonationScreen> {
         _isLoading = false;
       });
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error loading user details: $e')));
-      setState(() {
-        _isLoading = false;
-      });
+      _showSnackBar('Error loading user details: $e');
+      setState(() => _isLoading = false);
     }
   }
 
   Future<void> _openDocument(String url) async {
-    if (url.isNotEmpty) {
-      try {
-        final Uri uri = Uri.parse(url);
-        if (await canLaunchUrl(uri)) {
-          await launchUrl(uri, mode: LaunchMode.externalApplication);
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Could not launch document URL')),
-          );
-        }
-      } catch (e) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error opening document: $e')));
+    if (url.isEmpty) return;
+
+    try {
+      final Uri uri = Uri.parse(url);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        _showSnackBar('Could not launch document URL');
       }
+    } catch (e) {
+      _showSnackBar('Error opening document: $e');
     }
+  }
+
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   void _approveMatch() async {
     if (_selectedNotificationId == null ||
         _feedbackController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please provide feedback before approving'),
-        ),
-      );
+      _showSnackBar('Please provide feedback before approving');
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
-
+    setState(() => _isLoading = true);
     try {
       await _notificationService.adminApproveMatch(
         _selectedNotificationId!,
         _feedbackController.text.trim(),
       );
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Match approved successfully')),
-      );
+      _showSnackBar('Match approved successfully');
       _resetSelection();
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error approving match: $e')));
+      _showSnackBar('Error approving match: $e');
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      setState(() => _isLoading = false);
     }
   }
 
   void _rejectMatch() async {
     if (_selectedNotificationId == null ||
         _feedbackController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please provide feedback before rejecting'),
-        ),
-      );
+      _showSnackBar('Please provide feedback before rejecting');
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
-
+    setState(() => _isLoading = true);
     try {
       await _notificationService.adminRejectMatch(
         _selectedNotificationId!,
         _feedbackController.text.trim(),
       );
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Match rejected successfully')),
-      );
+      _showSnackBar('Match rejected successfully');
       _resetSelection();
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error rejecting match: $e')));
+      _showSnackBar('Error rejecting match: $e');
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      setState(() => _isLoading = false);
     }
   }
 
@@ -167,185 +132,233 @@ class _DonationScreenState extends State<DonationScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Donation Match Reviews'),
-        backgroundColor: Colors.teal,
+        backgroundColor: kPinkColor,
       ),
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Left side - List of matches with tabs
-          Expanded(
-            flex: 2,
-            child: Card(
-              margin: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Tab selection buttons
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Row(
-                      children: [
-                        Expanded(child: _buildTabButton('Pending', 'pending')),
-                        Expanded(
-                          child: _buildTabButton('Approved', 'admin_approved'),
-                        ),
-                        Expanded(
-                          child: _buildTabButton('Rejected', 'admin_rejected'),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    child: StreamBuilder<List<MatchNotification>>(
-                      stream: _getMatchesStream(),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const Center(
-                            child: CircularProgressIndicator(),
-                          );
-                        }
+          // Left side - Match list with tabs
+          Expanded(flex: 2, child: _buildMatchesList()),
+          // Right side - Selected match details
+          Expanded(flex: 3, child: _buildDetailsPanel()),
+        ],
+      ),
+    );
+  }
 
-                        if (snapshot.hasError) {
-                          print(
-                            'FIREBASE ERROR IN STREAMBUILDER: ${snapshot.error}',
-                          );
-                          print('ERROR DETAILS: ${snapshot.error.toString()}');
-                          return Center(
-                            child: Text('Error: ${snapshot.error}'),
-                          );
-                        }
-
-                        final notifications = snapshot.data ?? [];
-
-                        if (notifications.isEmpty) {
-                          return Center(
-                            child: Text(
-                              'No ${_getStatusDisplayName()} matches found',
-                            ),
-                          );
-                        }
-
-                        return ListView.builder(
-                          itemCount: notifications.length,
-                          itemBuilder: (context, index) {
-                            final notification = notifications[index];
-
-                            return ListTile(
-                              title: Text(
-                                '${notification.user1Name} & ${notification.user2Name}',
-                              ),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Organ: ${notification.organType} • Match Score: ${notification.matchScore}%',
-                                  ),
-                                  if (_currentTabStatus != 'pending' &&
-                                      notification.adminFeedback != null)
-                                    Text(
-                                      'Feedback: ${notification.adminFeedback}',
-                                      style: TextStyle(
-                                        fontStyle: FontStyle.italic,
-                                        color: Colors.grey[600],
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                ],
-                              ),
-                              trailing: Column(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    _formatDate(notification.timestamp),
-                                    style: TextStyle(color: Colors.grey[600]),
-                                  ),
-                                  if (_currentTabStatus == 'admin_approved')
-                                    Icon(
-                                      Icons.check_circle,
-                                      color: Colors.green,
-                                      size: 16,
-                                    ),
-                                  if (_currentTabStatus == 'admin_rejected')
-                                    Icon(
-                                      Icons.cancel,
-                                      color: Colors.red,
-                                      size: 16,
-                                    ),
-                                ],
-                              ),
-                              selected:
-                                  _selectedNotificationId == notification.id,
-                              onTap: () {
-                                setState(() {
-                                  _selectedNotificationId = notification.id;
-                                  _selectedNotification = notification;
-                                  _currentDocsView = '';
-
-                                  // Pre-populate feedback if available
-                                  if (notification.adminFeedback != null) {
-                                    _feedbackController.text =
-                                        notification.adminFeedback!;
-                                  } else {
-                                    _feedbackController.clear();
-                                  }
-                                });
-
-                                _loadUserDetails(
-                                  notification.user1Id,
-                                  notification.user2Id,
-                                );
-                              },
-                            );
-                          },
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
+  Widget _buildMatchesList() {
+    return Card(
+      margin: const EdgeInsets.all(16.0),
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Tab selection buttons
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              children: [
+                Expanded(child: _buildTabButton('Pending', 'pending')),
+                Expanded(child: _buildTabButton('Approved', 'admin_approved')),
+                Expanded(child: _buildTabButton('Rejected', 'admin_rejected')),
+              ],
             ),
           ),
-
-          // Right side - Selected match details
           Expanded(
-            flex: 3,
-            child:
-                _selectedNotificationId == null
-                    ? const Center(child: Text('Select a match to review'))
-                    : _isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : _currentDocsView.isNotEmpty
-                    ? _buildDocumentsView()
-                    : _buildMatchDetails(),
+            child: StreamBuilder<List<MatchNotification>>(
+              stream: _getMatchesStream(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
+
+                final notifications = snapshot.data ?? [];
+
+                if (notifications.isEmpty) {
+                  return Center(
+                    child: Text(
+                      'No ${_getStatusDisplayName()} matches found',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  );
+                }
+
+                return _buildNotificationsList(notifications);
+              },
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildTabButton(String title, String status) {
-    bool isSelected = _currentTabStatus == status;
-    return ElevatedButton(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: isSelected ? Colors.teal : Colors.grey[200],
-        foregroundColor: isSelected ? Colors.white : Colors.black87,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        elevation: isSelected ? 4 : 0,
-      ),
-      onPressed: () {
-        setState(() {
-          _currentTabStatus = status;
-          _resetSelection();
-        });
+  Widget _buildNotificationsList(List<MatchNotification> notifications) {
+    return ListView.builder(
+      itemCount: notifications.length,
+      itemBuilder: (context, index) {
+        final notification = notifications[index];
+        final bool isSelected = _selectedNotificationId == notification.id;
+
+        return Card(
+          margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          elevation: isSelected ? 4 : 1,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+            side:
+                isSelected
+                    ? BorderSide(color: kOrangeColor, width: 2)
+                    : BorderSide.none,
+          ),
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 8,
+            ),
+            title: Text(
+              '${notification.user1Name} & ${notification.user2Name}',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Icon(Icons.medical_services, size: 16, color: kRedColor),
+                    const SizedBox(width: 4),
+                    Text(
+                      notification.organType,
+                      style: TextStyle(color: kRedColor),
+                    ),
+                    const SizedBox(width: 12),
+                    Icon(Icons.percent, size: 16, color: Colors.blue[700]),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${notification.matchScore}%',
+                      style: TextStyle(color: Colors.blue[700]),
+                    ),
+                  ],
+                ),
+                if (_currentTabStatus != 'pending' &&
+                    notification.adminFeedback != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      'Feedback: ${notification.adminFeedback}',
+                      style: TextStyle(
+                        fontStyle: FontStyle.italic,
+                        color: Colors.grey[600],
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+              ],
+            ),
+            trailing: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  _formatDate(notification.timestamp),
+                  style: TextStyle(color: Colors.grey[600]),
+                ),
+                const SizedBox(height: 4),
+                if (_currentTabStatus == 'admin_approved')
+                  Icon(Icons.check_circle, color: Colors.green, size: 16),
+                if (_currentTabStatus == 'admin_rejected')
+                  Icon(Icons.cancel, color: Colors.red, size: 16),
+              ],
+            ),
+            selected: isSelected,
+            onTap: () {
+              setState(() {
+                _selectedNotificationId = notification.id;
+                _selectedNotification = notification;
+                _currentDocsView = '';
+
+                // Pre-populate feedback if available
+                if (notification.adminFeedback != null) {
+                  _feedbackController.text = notification.adminFeedback!;
+                } else {
+                  _feedbackController.clear();
+                }
+              });
+
+              _loadUserDetails(notification.user1Id, notification.user2Id);
+            },
+          ),
+        );
       },
-      child: Text(title),
     );
   }
 
-  // Helper to get the appropriate match stream based on the selected tab
+  Widget _buildDetailsPanel() {
+    if (_selectedNotificationId == null) {
+      return _buildEmptyDetailsCard();
+    }
+
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return _currentDocsView.isNotEmpty
+        ? _buildDocumentsView()
+        : _buildMatchDetails();
+  }
+
+  Widget _buildEmptyDetailsCard() {
+    return Card(
+      margin: const EdgeInsets.all(16.0),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.assignment, size: 64, color: Colors.grey[400]),
+            const SizedBox(height: 16),
+            const Text(
+              'Select a match to review',
+              style: TextStyle(fontSize: 18, color: Colors.grey),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTabButton(String title, String status) {
+    bool isSelected = _currentTabStatus == status;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: isSelected ? kOrangeColor : Colors.grey[200],
+          foregroundColor: isSelected ? Colors.white : Colors.black87,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          elevation: isSelected ? 4 : 0,
+          padding: const EdgeInsets.symmetric(vertical: 12),
+        ),
+        onPressed: () {
+          setState(() {
+            _currentTabStatus = status;
+            _resetSelection();
+          });
+        },
+        child: Text(title),
+      ),
+    );
+  }
+
   Stream<List<MatchNotification>> _getMatchesStream() {
     switch (_currentTabStatus) {
       case 'pending':
@@ -359,7 +372,6 @@ class _DonationScreenState extends State<DonationScreen> {
     }
   }
 
-  // Helper to display status in UI
   String _getStatusDisplayName() {
     switch (_currentTabStatus) {
       case 'pending':
@@ -376,9 +388,12 @@ class _DonationScreenState extends State<DonationScreen> {
   Widget _buildDocumentsView() {
     UserModel user =
         _currentDocsView == 'donor' ? _donorUser! : _recipientUser!;
+    Color roleColor = _currentDocsView == 'donor' ? Colors.blue : kOrangeColor;
 
     return Card(
       margin: const EdgeInsets.all(16.0),
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -388,11 +403,8 @@ class _DonationScreenState extends State<DonationScreen> {
               children: [
                 IconButton(
                   icon: const Icon(Icons.arrow_back),
-                  onPressed: () {
-                    setState(() {
-                      _currentDocsView = '';
-                    });
-                  },
+                  onPressed: () => setState(() => _currentDocsView = ''),
+                  tooltip: 'Back to match details',
                 ),
                 Expanded(
                   child: Text(
@@ -411,45 +423,70 @@ class _DonationScreenState extends State<DonationScreen> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  backgroundColor:
-                      _currentDocsView == 'donor' ? Colors.blue : Colors.orange,
+                  backgroundColor: roleColor,
                 ),
               ],
             ),
             const Divider(height: 24),
 
             if (user.medicalDocuments.isEmpty)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(32.0),
-                  child: Text(
-                    'No medical documents found for this user',
-                    style: TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
-                  ),
-                ),
-              )
+              _buildEmptyDocumentsMessage()
             else
-              Expanded(
-                child: ListView(
-                  children:
-                      user.medicalDocuments.entries.map((entry) {
-                        return Card(
-                          elevation: 2,
-                          margin: const EdgeInsets.symmetric(vertical: 8),
-                          child: ListTile(
-                            leading: const Icon(Icons.description),
-                            title: Text(entry.key),
-                            subtitle: const Text('Click to view document'),
-                            trailing: const Icon(Icons.open_in_new),
-                            onTap: () => _openDocument(entry.value),
-                          ),
-                        );
-                      }).toList(),
-                ),
-              ),
+              Expanded(child: _buildDocumentsList(user)),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildEmptyDocumentsMessage() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.folder_off, size: 64, color: Colors.grey[400]),
+            const SizedBox(height: 16),
+            const Text(
+              'No medical documents found for this user',
+              style: TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDocumentsList(UserModel user) {
+    return ListView(
+      children:
+          user.medicalDocuments.entries.map((entry) {
+            return Card(
+              elevation: 2,
+              margin: const EdgeInsets.symmetric(vertical: 8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: kPinkColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(Icons.description, color: kPinkColor),
+                ),
+                title: Text(
+                  entry.key,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                subtitle: const Text('Click to view document'),
+                trailing: Icon(Icons.open_in_new, color: kOrangeColor),
+                onTap: () => _openDocument(entry.value),
+              ),
+            );
+          }).toList(),
     );
   }
 
@@ -464,6 +501,8 @@ class _DonationScreenState extends State<DonationScreen> {
 
     return Card(
       margin: const EdgeInsets.all(16.0),
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -487,9 +526,28 @@ class _DonationScreenState extends State<DonationScreen> {
               ],
             ),
             const SizedBox(height: 8),
-            Text(
-              'Organ Type: ${_selectedNotification!.organType} • Match Score: ${_selectedNotification!.matchScore}%',
-              style: TextStyle(color: Colors.grey[700], fontSize: 16.0),
+            Row(
+              children: [
+                Icon(Icons.medical_services, color: kRedColor, size: 18),
+                const SizedBox(width: 8),
+                Text(
+                  _selectedNotification!.organType,
+                  style: TextStyle(
+                    color: kRedColor,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Icon(Icons.bar_chart, color: Colors.blue[700], size: 18),
+                const SizedBox(width: 8),
+                Text(
+                  'Match Score: ${_selectedNotification!.matchScore}%',
+                  style: TextStyle(
+                    color: Colors.blue[700],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
             const Divider(height: 32),
 
@@ -500,9 +558,7 @@ class _DonationScreenState extends State<DonationScreen> {
                 children: [
                   // Donor details
                   Expanded(child: _buildUserDetailsCard(_donorUser!, 'Donor')),
-
                   const SizedBox(width: 16),
-
                   // Recipient details
                   Expanded(
                     child: _buildUserDetailsCard(_recipientUser!, 'Recipient'),
@@ -516,9 +572,16 @@ class _DonationScreenState extends State<DonationScreen> {
             // Admin feedback input
             TextField(
               controller: _feedbackController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Feedback (required)',
-                border: OutlineInputBorder(),
+                labelStyle: TextStyle(color: kPinkColor),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: kPinkColor, width: 2),
+                ),
                 hintText: 'Provide reason for approval or rejection...',
               ),
               maxLines: 3,
@@ -534,6 +597,12 @@ class _DonationScreenState extends State<DonationScreen> {
                 children: [
                   OutlinedButton(
                     onPressed: _resetSelection,
+                    style: OutlinedButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      side: BorderSide(color: Colors.grey[400]!),
+                    ),
                     child: const Text('Cancel'),
                   ),
                   const SizedBox(width: 16),
@@ -542,6 +611,9 @@ class _DonationScreenState extends State<DonationScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red,
                       foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
                     child: const Text('Reject Match'),
                   ),
@@ -551,6 +623,9 @@ class _DonationScreenState extends State<DonationScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,
                       foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
                     child: const Text('Approve Match'),
                   ),
@@ -562,6 +637,11 @@ class _DonationScreenState extends State<DonationScreen> {
                 children: [
                   OutlinedButton(
                     onPressed: _resetSelection,
+                    style: OutlinedButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
                     child: const Text('Back'),
                   ),
                 ],
@@ -587,8 +667,14 @@ class _DonationScreenState extends State<DonationScreen> {
   }
 
   Widget _buildUserDetailsCard(UserModel user, String role) {
+    final bool isDonor = role == 'Donor';
+    final Color roleColor = isDonor ? Colors.blue : kOrangeColor;
+    final Color roleBackgroundColor =
+        isDonor ? Colors.blue[100]! : kOrangeColor.withOpacity(0.2);
+
     return Card(
       elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -596,14 +682,21 @@ class _DonationScreenState extends State<DonationScreen> {
           children: [
             Row(
               children: [
-                CircleAvatar(
-                  radius: 30,
-                  backgroundImage:
-                      user.imageUrl.isNotEmpty
-                          ? NetworkImage(user.imageUrl) as ImageProvider
-                          : const AssetImage(
-                            'assets/images/avatar_placeholder.png',
-                          ),
+                // User profile image
+                Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: roleColor, width: 2),
+                  ),
+                  child: CircleAvatar(
+                    radius: 30,
+                    backgroundImage:
+                        user.imageUrl.isNotEmpty
+                            ? NetworkImage(user.imageUrl) as ImageProvider
+                            : const AssetImage(
+                              'assets/images/avatar_placeholder.png',
+                            ),
+                  ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -617,11 +710,22 @@ class _DonationScreenState extends State<DonationScreen> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      Text(
-                        role,
-                        style: TextStyle(
-                          color: role == 'Donor' ? Colors.blue : Colors.orange,
-                          fontWeight: FontWeight.w500,
+                      const SizedBox(height: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: roleBackgroundColor,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          role,
+                          style: TextStyle(
+                            color: roleColor,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
                     ],
@@ -635,27 +739,34 @@ class _DonationScreenState extends State<DonationScreen> {
                     });
                   },
                   icon: const Icon(Icons.folder_open),
-                  label: const Text('Medical Documents'),
+                  label: const Text('Documents'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        role == 'Donor' ? Colors.blue[100] : Colors.orange[100],
-                    foregroundColor:
-                        role == 'Donor' ? Colors.blue[900] : Colors.orange[900],
+                    backgroundColor: roleBackgroundColor,
+                    foregroundColor: roleColor,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                 ),
               ],
             ),
             const Divider(height: 32),
+
+            // User information
             _buildInfoRow('Age', _calculateAge(user.dateOfBirth)),
             _buildInfoRow('Gender', user.gender),
             _buildInfoRow('Blood Type', user.bloodType),
             _buildInfoRow('City', user.city),
+
             const SizedBox(height: 16),
             const Text(
               'HLA Typing',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
+
+            // HLA typing chips
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -667,32 +778,46 @@ class _DonationScreenState extends State<DonationScreen> {
                     );
                   }).toList(),
             ),
+
             const SizedBox(height: 16),
             if (user.isDonor == false) // Only for recipients
               _buildInfoRow('Waiting Time', '${user.waitingTime} days'),
 
             // Medical documents count indicator
             const SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(
-                  Icons.folder,
-                  color:
-                      user.medicalDocuments.isEmpty ? Colors.grey : Colors.teal,
-                  size: 18,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Medical Documents: ${user.medicalDocuments.length}',
-                  style: TextStyle(
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color:
+                    user.medicalDocuments.isEmpty
+                        ? Colors.grey[200]
+                        : kPinkColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.folder,
                     color:
                         user.medicalDocuments.isEmpty
                             ? Colors.grey
-                            : Colors.teal,
-                    fontWeight: FontWeight.w500,
+                            : kPinkColor,
+                    size: 18,
                   ),
-                ),
-              ],
+                  const SizedBox(width: 8),
+                  Text(
+                    'Medical Documents: ${user.medicalDocuments.length}',
+                    style: TextStyle(
+                      color:
+                          user.medicalDocuments.isEmpty
+                              ? Colors.grey
+                              : kPinkColor,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -710,9 +835,9 @@ class _DonationScreenState extends State<DonationScreen> {
             width: 100,
             child: Text(
               '$label:',
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.w500,
-                color: Colors.grey,
+                color: Colors.grey[700],
               ),
             ),
           ),
@@ -754,7 +879,6 @@ class _DonationScreenState extends State<DonationScreen> {
       }
       return '$age years';
     } catch (e) {
-      print('Error calculating age: $e');
       return 'Unknown';
     }
   }

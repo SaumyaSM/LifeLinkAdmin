@@ -22,7 +22,12 @@ class _CreateAdminState extends State<CreateAdmin> {
   bool isLoading = false;
   TextEditingController emailTEC = TextEditingController();
   TextEditingController nameTEC = TextEditingController();
+  TextEditingController passwordTEC = TextEditingController();
+  TextEditingController confirmPasswordTEC = TextEditingController();
   bool _isSuperAdmin = false;
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
+  bool _sendResetEmail = true;
 
   @override
   Widget build(BuildContext context) {
@@ -116,6 +121,104 @@ class _CreateAdminState extends State<CreateAdmin> {
                         title: 'Email Address',
                         icon: const Icon(Icons.mail_outline_rounded),
                         keyboardType: TextInputType.emailAddress,
+                      ),
+                      const SizedBox(height: 20),
+                      // Password Field
+                      TextFormField(
+                        controller: passwordTEC,
+                        obscureText: _obscurePassword,
+                        decoration: InputDecoration(
+                          labelText: 'Password',
+                          prefixIcon: const Icon(Icons.lock_outline_rounded),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePassword
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                              color: Colors.grey,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _obscurePassword = !_obscurePassword;
+                              });
+                            },
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: kOrangeColor),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 16,
+                            horizontal: 16,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      // Confirm Password Field
+                      TextFormField(
+                        controller: confirmPasswordTEC,
+                        obscureText: _obscureConfirmPassword,
+                        decoration: InputDecoration(
+                          labelText: 'Confirm Password',
+                          prefixIcon: const Icon(Icons.lock_outline_rounded),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscureConfirmPassword
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                              color: Colors.grey,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _obscureConfirmPassword =
+                                    !_obscureConfirmPassword;
+                              });
+                            },
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: kOrangeColor),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 16,
+                            horizontal: 16,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      // Send Reset Email Option
+                      CheckboxListTile(
+                        title: const Text(
+                          'Send password reset email',
+                          style: TextStyle(fontSize: 14, color: Colors.black87),
+                        ),
+                        value: _sendResetEmail,
+                        activeColor: kOrangeColor,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                        ),
+                        controlAffinity: ListTileControlAffinity.leading,
+                        onChanged: (bool? value) {
+                          setState(() {
+                            _sendResetEmail = value!;
+                          });
+                        },
                       ),
                       const SizedBox(height: 24),
                       const Padding(
@@ -256,32 +359,76 @@ class _CreateAdminState extends State<CreateAdmin> {
       return;
     }
 
-    // setState(() => isLoading = true);
+    if (passwordTEC.text.isEmpty) {
+      ToastService.displayErrorMotionToast(
+        context: context,
+        description: 'Password is required!',
+      );
+      return;
+    }
 
-    await AuthService.registerAdmin(emailTEC.text.trim())
-        .then((String uid) async {
-          AdminModel model = AdminModel(
-            id: uid,
-            name: nameTEC.text.trim(),
-            isSuperAdmin: _isSuperAdmin,
-            email: emailTEC.text.trim(),
-          );
-          await AdminService.createAdmin(model).then((value) {
-            ToastService.displaySuccessMotionToast(
-              context: context,
-              description: 'Admin successfully created!',
-            );
-            Scaffold.of(widget.context).closeEndDrawer();
-            setState(() => isLoading = false);
-            widget.getData();
-          });
-        })
-        .catchError((error) {
-          ToastService.displayErrorMotionToast(
-            context: context,
-            description: 'Something went wrong!',
-          );
-          setState(() => isLoading = false);
-        });
+    if (passwordTEC.text.length < 6) {
+      ToastService.displayErrorMotionToast(
+        context: context,
+        description: 'Password must be at least 6 characters long!',
+      );
+      return;
+    }
+
+    if (passwordTEC.text != confirmPasswordTEC.text) {
+      ToastService.displayErrorMotionToast(
+        context: context,
+        description: 'Passwords do not match!',
+      );
+      return;
+    }
+
+    setState(() => isLoading = true);
+
+    try {
+      // Create user with provided password
+      String uid = await AuthService.registerAdminWithPassword(
+        email: emailTEC.text.trim(),
+        password: passwordTEC.text,
+      );
+
+      // Create admin model
+      AdminModel model = AdminModel(
+        id: uid,
+        name: nameTEC.text.trim(),
+        isSuperAdmin: _isSuperAdmin,
+        email: emailTEC.text.trim(),
+      );
+
+      // Create admin in database
+      await AdminService.createAdmin(model, sendResetEmail: _sendResetEmail);
+
+      ToastService.displaySuccessMotionToast(
+        context: context,
+        description: 'Admin successfully created!',
+      );
+
+      Scaffold.of(widget.context).closeEndDrawer();
+      widget.getData();
+    } catch (error) {
+      ToastService.displayErrorMotionToast(
+        context: context,
+        description:
+            error.toString().contains('email-already-in-use')
+                ? 'Email already in use!'
+                : 'Something went wrong!',
+      );
+    } finally {
+      setState(() => isLoading = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    emailTEC.dispose();
+    nameTEC.dispose();
+    passwordTEC.dispose();
+    confirmPasswordTEC.dispose();
+    super.dispose();
   }
 }

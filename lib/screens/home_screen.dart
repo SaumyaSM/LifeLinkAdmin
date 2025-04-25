@@ -1,16 +1,25 @@
 import 'package:easy_sidemenu/easy_sidemenu.dart';
 import 'package:flutter/material.dart';
 import 'package:life_link_admin/constants/colors.dart';
+import 'package:life_link_admin/models/admin_model.dart';
+import 'package:life_link_admin/screens/admin/admin_profile_screen.dart';
 import 'package:life_link_admin/screens/admin/admin_screen.dart';
 import 'package:life_link_admin/screens/dashboard/dashboard_screen.dart';
 import 'package:life_link_admin/screens/donations/donations_screen.dart';
 import 'package:life_link_admin/screens/donations/manage_donation_status.dart';
 import 'package:life_link_admin/screens/events/events_screen.dart';
+import 'package:life_link_admin/screens/login_screen.dart';
 import 'package:life_link_admin/screens/users/users_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final bool isSuperAdmin;
-  const HomeScreen({super.key, required this.isSuperAdmin});
+  final AdminModel adminModel;
+
+  const HomeScreen({
+    super.key,
+    required this.isSuperAdmin,
+    required this.adminModel,
+  });
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -52,6 +61,13 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  void _handleLogout() {
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
+      (route) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -82,7 +98,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   Image.asset('assets/images/LifeLink-Logo.PNG', height: 40),
                   const SizedBox(width: 12),
-                  Text(
+                  const Text(
                     'LifeLink',
                     style: TextStyle(
                       color: Colors.white,
@@ -102,7 +118,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     child: Text(
                       _currentTitle,
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                         fontSize: 18,
@@ -110,9 +126,47 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   const Spacer(),
-                  CircleAvatar(
-                    backgroundColor: kProfileIcon,
-                    child: Icon(Icons.person, color: Colors.white),
+                  // Updated CircleAvatar with GestureDetector for profile navigation
+                  GestureDetector(
+                    onTap: () {
+                      // Show the admin profile as a dialog
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return Dialog(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            elevation: 0,
+                            backgroundColor: Colors.transparent,
+                            child: Container(
+                              constraints: const BoxConstraints(maxWidth: 450),
+                              child: AdminProfileScreen(
+                                admin: widget.adminModel,
+                                onLogout: _handleLogout,
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                    child: Hero(
+                      tag: 'profileAvatar',
+                      child: CircleAvatar(
+                        backgroundColor: kProfileIcon,
+                        child: Text(
+                          widget.adminModel.name.isNotEmpty
+                              ? widget.adminModel.name
+                                  .substring(0, 1)
+                                  .toUpperCase()
+                              : "A",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -131,7 +185,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         BoxShadow(
                           color: Colors.black.withOpacity(0.05),
                           blurRadius: 5,
-                          offset: Offset(2, 0),
+                          offset: const Offset(2, 0),
                         ),
                       ],
                     ),
@@ -163,19 +217,17 @@ class _HomeScreenState extends State<HomeScreen> {
                       title: Column(
                         children: [
                           const SizedBox(height: 20),
-                          Container(
-                            child: ConstrainedBox(
-                              constraints: const BoxConstraints(
-                                maxHeight: 100,
-                                maxWidth: 100,
-                              ),
-                              child: Image.asset(
-                                'assets/images/LifeLink-Logo.PNG',
-                              ),
+                          ConstrainedBox(
+                            constraints: const BoxConstraints(
+                              maxHeight: 100,
+                              maxWidth: 100,
+                            ),
+                            child: Image.asset(
+                              'assets/images/LifeLink-Logo.PNG',
                             ),
                           ),
                           const SizedBox(height: 12),
-                          const Text(
+                          Text(
                             'Admin Portal',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
@@ -279,13 +331,13 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: PageView(
                           controller: pageController,
                           children: [
-                            DashboardScreen(),
-                            if (widget.isSuperAdmin) AdminScreen(),
-                            UsersScreen(isDonor: true),
-                            UsersScreen(isDonor: false),
-                            DonationScreen(),
-                            ManageDonationStatusScreen(),
-                            EventsScreen(),
+                            const DashboardScreen(),
+                            if (widget.isSuperAdmin) const AdminScreen(),
+                            const UsersScreen(isDonor: true),
+                            const UsersScreen(isDonor: false),
+                            const DonationScreen(),
+                            const ManageDonationStatusScreen(),
+                            const EventsScreen(),
                           ],
                         ),
                       ),

@@ -215,12 +215,16 @@ class _LoginScreenState extends State<LoginScreen> {
           email: emailTEC.text.trim(),
           password: passwordTEC.text.trim(),
         )
-        .then((value) {
+        .then((adminModel) {
           Navigator.push(
             context,
             MaterialPageRoute(
               builder:
-                  (context) => HomeScreen(isSuperAdmin: value.isSuperAdmin),
+                  (context) => HomeScreen(
+                    isSuperAdmin: adminModel.isSuperAdmin,
+                    adminModel:
+                        adminModel, // Add this line to pass the admin model
+                  ),
             ),
           );
         })
