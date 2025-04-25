@@ -7,7 +7,9 @@ class DonationStatusService {
   static final donationStatusCollection = 'donationStatuses';
 
   // Create a new donation status from an admin-approved match
-  Future<String> createDonationStatus(MatchNotification matchNotification) async {
+  Future<String> createDonationStatus(
+    MatchNotification matchNotification,
+  ) async {
     try {
       // Validate that the notification is admin-approved
       if (matchNotification.status != 'admin_approved') {
@@ -45,7 +47,10 @@ class DonationStatusService {
         statusHistory: statusHistory,
       );
 
-      await _firestore.collection('donationStatuses').doc(statusId).set(donationStatus.toMap());
+      await _firestore
+          .collection('donationStatuses')
+          .doc(statusId)
+          .set(donationStatus.toMap());
 
       return statusId;
     } catch (e) {
@@ -62,7 +67,8 @@ class DonationStatusService {
   ) async {
     try {
       // Get the current donation status
-      DocumentSnapshot doc = await _firestore.collection('donationStatuses').doc(donationId).get();
+      DocumentSnapshot doc =
+          await _firestore.collection('donationStatuses').doc(donationId).get();
 
       if (!doc.exists) {
         throw Exception('Donation status not found');
@@ -74,7 +80,9 @@ class DonationStatusService {
       );
 
       // Add the new status to history
-      Map<String, DateTime> updatedHistory = Map.from(currentStatus.statusHistory);
+      Map<String, DateTime> updatedHistory = Map.from(
+        currentStatus.statusHistory,
+      );
       String statusKey = newStatus.toString().split('.').last;
       updatedHistory[statusKey] = DateTime.now();
 
@@ -86,7 +94,10 @@ class DonationStatusService {
         statusHistory: updatedHistory,
       );
 
-      await _firestore.collection('donationStatuses').doc(donationId).update(updatedStatus.toMap());
+      await _firestore
+          .collection('donationStatuses')
+          .doc(donationId)
+          .update(updatedStatus.toMap());
 
       // Send notifications to users about status change
       await _notifyStatusChange(updatedStatus);
@@ -99,7 +110,8 @@ class DonationStatusService {
   // Get a single donation status
   Future<DonationStatus?> getDonationStatus(String donationId) async {
     try {
-      DocumentSnapshot doc = await _firestore.collection('donationStatuses').doc(donationId).get();
+      DocumentSnapshot doc =
+          await _firestore.collection('donationStatuses').doc(donationId).get();
 
       if (!doc.exists) {
         return null;
@@ -119,7 +131,9 @@ class DonationStatusService {
         .orderBy('statusTimestamp', descending: true)
         .snapshots()
         .map((snapshot) {
-          return snapshot.docs.map((doc) => DonationStatus.fromMap(doc.data(), doc.id)).toList();
+          return snapshot.docs
+              .map((doc) => DonationStatus.fromMap(doc.data(), doc.id))
+              .toList();
         });
   }
 
@@ -128,12 +142,17 @@ class DonationStatusService {
     return _firestore
         .collection('donationStatuses')
         .where(
-          Filter.or(Filter('donorId', isEqualTo: userId), Filter('recipientId', isEqualTo: userId)),
+          Filter.or(
+            Filter('donorId', isEqualTo: userId),
+            Filter('recipientId', isEqualTo: userId),
+          ),
         )
         .orderBy('statusTimestamp', descending: true)
         .snapshots()
         .map((snapshot) {
-          return snapshot.docs.map((doc) => DonationStatus.fromMap(doc.data(), doc.id)).toList();
+          return snapshot.docs
+              .map((doc) => DonationStatus.fromMap(doc.data(), doc.id))
+              .toList();
         });
   }
 
@@ -208,14 +227,18 @@ class DonationStatusService {
   }
 
   // Filter donation statuses by status type
-  Stream<List<DonationStatus>> getDonationStatusesByType(DonationStatusType statusType) {
+  Stream<List<DonationStatus>> getDonationStatusesByType(
+    DonationStatusType statusType,
+  ) {
     return _firestore
         .collection('donationStatuses')
         .where('status', isEqualTo: statusType.toString().split('.').last)
         .orderBy('statusTimestamp', descending: true)
         .snapshots()
         .map((snapshot) {
-          return snapshot.docs.map((doc) => DonationStatus.fromMap(doc.data(), doc.id)).toList();
+          return snapshot.docs
+              .map((doc) => DonationStatus.fromMap(doc.data(), doc.id))
+              .toList();
         });
   }
 
