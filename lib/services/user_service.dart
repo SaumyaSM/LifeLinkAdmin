@@ -117,4 +117,15 @@ class UserService {
       throw e;
     }
   }
+
+  Future<String?> fetchProfileImage(String userId) async {
+    try {
+      DocumentSnapshot userDoc =
+          await _firestore.collection('users').doc(userId).get();
+      return userDoc['profileImageUrl'] as String?;
+    } catch (e) {
+      print('Error fetching profile image: $e');
+      return null;
+    }
+  }
 }
