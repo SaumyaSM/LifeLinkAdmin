@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:life_link_admin/constants/colors.dart';
 import 'package:life_link_admin/models/events_model.dart';
 import 'package:life_link_admin/screens/events/create_event.dart';
@@ -188,6 +189,18 @@ class _EventsScreenState extends State<EventsScreen> {
                         ),
                       ),
                     ),
+                    TextButton.icon(
+                      onPressed: () => editEvent(model),
+                      icon: const Icon(Icons.edit_outlined, size: 20),
+                      label: const Text('Edit'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: kPurpleColor,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ],
@@ -255,5 +268,140 @@ class _EventsScreenState extends State<EventsScreen> {
             ],
           ),
     );
+  }
+
+  void editEvent(EventModel model) {
+    // Create controllers and initialize with current values
+    final TextEditingController titleController = TextEditingController(
+      text: model.title,
+    );
+    final TextEditingController descriptionController = TextEditingController(
+      text: model.description,
+    );
+    final TextEditingController dateController = TextEditingController(
+      text: model.date,
+    );
+
+    showDialog<String>(
+      context: context,
+      builder:
+          (BuildContext context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: const Text(
+              'Edit Event',
+              style: TextStyle(
+                color: kPurpleColor,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: titleController,
+                    decoration: InputDecoration(
+                      labelText: 'Title',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: descriptionController,
+                    maxLines: 3,
+                    decoration: InputDecoration(
+                      labelText: 'Description',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: dateController,
+                    readOnly: true,
+                    decoration: InputDecoration(
+                      labelText: 'Date',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      suffixIcon: Icon(Icons.calendar_today),
+                    ),
+                    onTap: () async {
+                      final DateTime? pickedDate = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now(),
+                        firstDate: DateTime.now(),
+                        lastDate: DateTime(2100),
+                      );
+                      if (pickedDate != null) {
+                        dateController.text = DateFormat(
+                          'yyyy-MM-dd',
+                        ).format(pickedDate);
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  Navigator.pop(context);
+                  setState(() => isLoading = true);
+
+                  // Create updated event model
+                  final updatedEvent = EventModel(
+                    id: model.id,
+                    title: titleController.text,
+                    description: descriptionController.text,
+                    date: dateController.text,
+                    // Keep other properties the same
+                    // Add other properties as needed
+                  );
+
+                  await EventService.updateEvent(updatedEvent)
+                      .then((value) {
+                        getData();
+                        ToastService.displaySuccessMotionToast(
+                          context: context,
+                          description: 'Event updated successfully!',
+                        );
+                      })
+                      .catchError((error) {
+                        setState(() => isLoading = false);
+                        ToastService.displayErrorMotionToast(
+                          context: context,
+                          description: 'Failed to update event!',
+                        );
+                      });
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: kPinkColor,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text('Save'),
+              ),
+            ],
+          ),
+    );
+
+    // Dispose controllers when no longer needed
+    // This should be handled appropriately in your widget lifecycle
   }
 }

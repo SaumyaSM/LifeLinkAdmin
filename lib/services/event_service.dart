@@ -7,22 +7,37 @@ class EventService {
   static Future<List<EventModel>> getEventsList() async {
     List<EventModel> list = [];
 
-    await FirebaseFirestore.instance.collection(eventsCollection).orderBy('timeStamp').get().then((
-      QuerySnapshot querySnapshot,
-    ) {
-      querySnapshot.docs.forEach((doc) {
-        list.add(EventModel.fromDocumentSnapshot(doc));
-      });
-    });
+    await FirebaseFirestore.instance
+        .collection(eventsCollection)
+        .orderBy('timeStamp')
+        .get()
+        .then((QuerySnapshot querySnapshot) {
+          querySnapshot.docs.forEach((doc) {
+            list.add(EventModel.fromDocumentSnapshot(doc));
+          });
+        });
 
     return list;
   }
 
   static Future<void> createEvent(EventModel model) async {
-    await FirebaseFirestore.instance.collection(eventsCollection).doc(model.id).set(model.toMap());
+    await FirebaseFirestore.instance
+        .collection(eventsCollection)
+        .doc(model.id)
+        .set(model.toMap());
+  }
+
+  static Future<void> updateEvent(EventModel model) async {
+    await FirebaseFirestore.instance
+        .collection(eventsCollection)
+        .doc(model.id)
+        .update(model.toMap());
   }
 
   static Future<void> deleteEvent(String id) async {
-    await FirebaseFirestore.instance.collection(eventsCollection).doc(id).delete();
+    await FirebaseFirestore.instance
+        .collection(eventsCollection)
+        .doc(id)
+        .delete();
   }
 }
