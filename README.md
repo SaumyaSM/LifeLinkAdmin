@@ -1,16 +1,25 @@
-# life_link_admin
+# Lifelink – Admin Web Panel
 
-A new Flutter project.
+This is the web-based admin interface for the Lifelink organ donation platform. It allows authorized administrators to manage users, approve organ matches, create events, and oversee platform activity. This panel works in coordination with the Lifelink mobile application.
 
-## Getting Started
+## 🔧 Features
 
-This project is a starting point for a Flutter application.
+- Admin login and access control
+- View and manage registered users (donors and recipients)
+- Approve or deny organ match requests
+- Create and publish organ donation events
+- Assign roles to additional admin accounts
+- Dashboard view of platform activity
 
-A few resources to get you started if this is your first Flutter project:
+## 🛠️ Technology Stack
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+- **Frontend**: (Specify here: Flutter Web / HTML+CSS+JS / React / etc.)
+- **Backend**: Firebase (Firestore, Authentication, Storage)
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## 🔐 Authentication
+
+Only users with an `admin` role in Firestore are granted access. Role checks are enforced in the frontend and backend.
+
+## 📄 License
+
+This admin panel is for academic and research demonstration purposes only. Do not use in real healthcare settings without compliance validation.
